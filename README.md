@@ -1,7 +1,7 @@
 # Mental Health in Tech - Classification Pipeline
- 
-> End-to-end deep learning pipeline for predicting mental health treatment-seeking behaviour
-> among tech workers, built with PyTorch, Optuna, and TensorBoard.
+
+End-to-end deep learning pipeline for predicting mental health treatment-seeking behaviour
+among tech workers, built with PyTorch, Optuna, and TensorBoard.
  
 ---
  
