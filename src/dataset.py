@@ -8,8 +8,8 @@ def build_fold_dataloaders(X, y, weights, fold_idx, batch_size, n_splits):
     splits = list(skf.split(X, y))
     train_idx, val_idx = splits[fold_idx]
 
-    X_train, X_val = X[train_idx].float(), X[val_idx].long()
-    y_train, y_val = y[train_idx].float(), y[val_idx].long()
+    X_train, X_val = X[train_idx], X[val_idx]
+    y_train, y_val = y[train_idx], y[val_idx]
 
     fold_weights = weights[train_idx]
     sampler = WeightedRandomSampler(fold_weights, len(fold_weights), replacement=True)
