@@ -37,14 +37,17 @@ def _validate(model, val_loader, criterion, epoch):
 def train(model, train_loader, val_loader, optimizer, criterion, fold_idx=0,
           device='cpu', n_epochs=100, clip_grad_norm=1.0,  write_model=True,
           tensorboard_dir="../runs/tensorboard"):
-    train_losses = []
-    val_losses = []
+    history = {'train_losses': [], 'val_losses': []}
+    best_val_loss = np.inf
 
     for epoch in range(n_epochs):
         train_loss = (_train_one_epoch(model, optimizer, criterion, train_loader))
         val_loss = (_validate(model, val_loader, criterion, epoch))
 
-        train_losses.append(train_loss)
-        val_losses.append(val_loss)
+        if val_loss <  best_val_loss:
+            best_val_loss = val_loss
 
-    return train_losses, val_losses
+        history['train_losses'].append(train_loss)
+        history['val_losses'].append(val_loss)
+
+    return history
