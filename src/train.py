@@ -1,3 +1,5 @@
+import os
+import csv
 import torch
 import numpy as np
 import torch.optim as optim
@@ -36,18 +38,46 @@ def _validate(model, val_loader, criterion, epoch):
 
 def train(model, train_loader, val_loader, optimizer, criterion, fold_idx=0,
           device='cpu', n_epochs=100, clip_grad_norm=1.0,  write_model=True,
-          tensorboard_dir="../runs/tensorboard"):
+          tensorboard_dir="../runs/tensorboard", checkpoint_dir="../runs/checkpoints",
+          csv_dir="../runs/csv_logs"):
+    fold_name = f"fold_{fold_idx}"
+    os.makedirs(tensorboard_dir, exist_ok=True)
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    os.makedirs(csv_dir, exist_ok=True)
+
+    writer = SummaryWriter(log_dir=os.path.join(tensorboard_dir, fold_name))
+
+    with open(os.path.join(csv_dir, f"{fold_name}_losses.csv"), "w", newline='') as f:
+        csv.writer(f).writerow(["epoch", "train_loss", "val_loss"])
+
+    model.to(device)
     history = {'train_losses': [], 'val_losses': []}
+    best_model_state = None
     best_val_loss = np.inf
 
     for epoch in range(n_epochs):
         train_loss = (_train_one_epoch(model, optimizer, criterion, train_loader))
         val_loss = (_validate(model, val_loader, criterion, epoch))
 
-        if val_loss <  best_val_loss:
-            best_val_loss = val_loss
-
         history['train_losses'].append(train_loss)
         history['val_losses'].append(val_loss)
 
+        writer.add_scalars("Epoch losses: ", {"train_loss": train_loss, "val_loss": val_loss}, epoch)
+        writer.flush()
+
+        with open(os.path.join(csv_dir, f"{fold_name}_losses.csv"), "a", newline="") as f:
+            csv.writer(f).writerow([epoch, train_loss, val_loss])
+
+        if val_loss <  best_val_loss:
+            best_val_loss = val_loss
+            best_model_state = model.state_dict()
+            if write_model:
+                (torch.save({"epoch": epoch, "model_state_dict": best_model_state, "best_val_loss": best_val_loss}),
+                 os.path.join(checkpoint_dir, f"{fold_name}_best.pt"))
+
+        print(f"[Fold {fold_idx}] Epoch {epoch:>3}/{n_epochs} | train: {train_loss:.4f} | val: {val_loss:.4f}"
+              + ("new best" if val_loss == best_val_loss else ""))
+
+    writer.close()
+    model.load_state_dict(best_model_state)
     return history
