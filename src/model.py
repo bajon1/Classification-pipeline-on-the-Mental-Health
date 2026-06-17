@@ -13,7 +13,11 @@ class MLP(nn.Module):
 
         self.output = nn.Linear(hidden_layers[-1], output_size)
         self.dropout = nn.Dropout(p=dropout_p)
-        self.activation = nn.ReLU() if activation == "relu" else nn.Tanh
+
+        if activation == 'relu':
+            self.activation = nn.ReLU()
+        elif activation == 'tanh':
+            self.activation = nn.Tanh()
 
     def forward(self, x):
         x = self.activation(self.input(x))
